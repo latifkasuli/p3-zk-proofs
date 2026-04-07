@@ -2,13 +2,10 @@ use std::time::Instant;
 
 use p3_baby_bear::BabyBear;
 use p3_field::PrimeCharacteristicRing;
-use p3_zk_proofs::{
-    prove_preimage_standard, prove_preimage_hiding, verify_preimage, WIDTH,
-};
+use p3_zk_proofs::{WIDTH, prove_preimage_hiding, prove_preimage_standard, verify_preimage};
 
 fn main() {
-    let preimage: [BabyBear; WIDTH] =
-        core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
+    let preimage: [BabyBear; WIDTH] = core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
     let seed = 42; // selects Poseidon2 round constants
 
     println!("=== Poseidon2 Preimage ZK Proof ===\n");

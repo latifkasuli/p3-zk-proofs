@@ -1,5 +1,5 @@
-pub mod preimage;
 pub mod merkle;
+pub mod preimage;
 
 use core::array;
 
@@ -51,10 +51,7 @@ impl<F: Copy + p3_field::PrimeCharacteristicRing> Poseidon2Params<F> {
 }
 
 /// Computes the full Poseidon2 permutation over a WIDTH-element state.
-pub fn poseidon2_permute<
-    F: PrimeField,
-    LinearLayers: GenericPoseidon2LinearLayers<WIDTH>,
->(
+pub fn poseidon2_permute<F: PrimeField, LinearLayers: GenericPoseidon2LinearLayers<WIDTH>>(
     mut state: [F; WIDTH],
     params: &Poseidon2Params<F>,
 ) -> [F; WIDTH] {
@@ -86,10 +83,7 @@ pub fn poseidon2_permute<
 }
 
 /// 2-to-1 compression: hashes two DIGEST_WIDTH-element digests into one.
-pub fn poseidon2_compress<
-    F: PrimeField,
-    LinearLayers: GenericPoseidon2LinearLayers<WIDTH>,
->(
+pub fn poseidon2_compress<F: PrimeField, LinearLayers: GenericPoseidon2LinearLayers<WIDTH>>(
     left: &[F; DIGEST_WIDTH],
     right: &[F; DIGEST_WIDTH],
     params: &Poseidon2Params<F>,
@@ -113,14 +107,18 @@ fn sbox<F: PrimeField>(x: F) -> F {
 // ---------------------------------------------------------------------------
 
 use p3_air::AirBuilder;
-use p3_poseidon2_air::{Poseidon2Cols, FullRound, PartialRound, SBox};
+use p3_poseidon2_air::{FullRound, PartialRound, Poseidon2Cols, SBox};
 
-pub fn constrain_poseidon2<
-    AB: AirBuilder,
-    LinearLayers: GenericPoseidon2LinearLayers<WIDTH>,
->(
+pub fn constrain_poseidon2<AB: AirBuilder, LinearLayers: GenericPoseidon2LinearLayers<WIDTH>>(
     builder: &mut AB,
-    local: &Poseidon2Cols<AB::Var, WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS>,
+    local: &Poseidon2Cols<
+        AB::Var,
+        WIDTH,
+        SBOX_DEGREE,
+        SBOX_REGISTERS,
+        HALF_FULL_ROUNDS,
+        PARTIAL_ROUNDS,
+    >,
     params: &Poseidon2Params<AB::F>,
 ) where
     AB::F: Copy,
@@ -157,10 +155,7 @@ pub fn constrain_poseidon2<
     }
 }
 
-fn eval_full_round<
-    AB: AirBuilder,
-    LinearLayers: GenericPoseidon2LinearLayers<WIDTH>,
->(
+fn eval_full_round<AB: AirBuilder, LinearLayers: GenericPoseidon2LinearLayers<WIDTH>>(
     state: &mut [AB::Expr; WIDTH],
     full_round: &FullRound<AB::Var, WIDTH, SBOX_DEGREE, SBOX_REGISTERS>,
     round_constants: &[AB::F; WIDTH],
@@ -179,10 +174,7 @@ fn eval_full_round<
     }
 }
 
-fn eval_partial_round<
-    AB: AirBuilder,
-    LinearLayers: GenericPoseidon2LinearLayers<WIDTH>,
->(
+fn eval_partial_round<AB: AirBuilder, LinearLayers: GenericPoseidon2LinearLayers<WIDTH>>(
     state: &mut [AB::Expr; WIDTH],
     partial_round: &PartialRound<AB::Var, WIDTH, SBOX_DEGREE, SBOX_REGISTERS>,
     round_constant: &AB::F,
@@ -246,8 +238,7 @@ mod tests {
         let mut rng = SmallRng::seed_from_u64(42);
         let params = Poseidon2Params::<BabyBear>::from_rng(&mut rng);
 
-        let left: [BabyBear; DIGEST_WIDTH] =
-            array::from_fn(|i| BabyBear::from_u64(i as u64 + 1));
+        let left: [BabyBear; DIGEST_WIDTH] = array::from_fn(|i| BabyBear::from_u64(i as u64 + 1));
         let right: [BabyBear; DIGEST_WIDTH] =
             array::from_fn(|i| BabyBear::from_u64(i as u64 + 100));
 

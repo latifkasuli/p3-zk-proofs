@@ -1,23 +1,21 @@
-use criterion::{Criterion, criterion_group, criterion_main, BenchmarkId};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use p3_baby_bear::BabyBear;
 use p3_field::PrimeCharacteristicRing;
 use p3_uni_stark::{prove, verify};
-use p3_zk_proofs::{
-    prove_preimage_standard, prove_preimage_hiding, verify_preimage,
-    prove_merkle_inclusion_standard, prove_merkle_inclusion_hiding, verify_merkle_inclusion,
-    WIDTH, DIGEST_WIDTH,
-};
-use p3_zk_proofs::air::preimage::PreimageAir;
 use p3_zk_proofs::air::merkle::MerkleInclusionAir;
-use p3_zk_proofs::backend::{StandardBackend, HidingBackend};
+use p3_zk_proofs::air::preimage::PreimageAir;
+use p3_zk_proofs::backend::{HidingBackend, StandardBackend};
+use p3_zk_proofs::{
+    DIGEST_WIDTH, WIDTH, prove_merkle_inclusion_hiding, prove_merkle_inclusion_standard,
+    prove_preimage_hiding, prove_preimage_standard, verify_merkle_inclusion, verify_preimage,
+};
 
 // ---------------------------------------------------------------------------
 // api/* -- measures end-to-end one-call API latency (setup + prove + verify)
 // ---------------------------------------------------------------------------
 
 fn bench_api_preimage(c: &mut Criterion) {
-    let preimage: [BabyBear; WIDTH] =
-        core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
+    let preimage: [BabyBear; WIDTH] = core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
     let seed = 42;
 
     c.bench_function("api/preimage/standard/prove", |b| {
@@ -66,8 +64,7 @@ fn bench_api_merkle(c: &mut Criterion) {
 // ---------------------------------------------------------------------------
 
 fn bench_core_preimage(c: &mut Criterion) {
-    let preimage: [BabyBear; WIDTH] =
-        core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
+    let preimage: [BabyBear; WIDTH] = core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
     let seed = 42;
     let air = PreimageAir::new(seed);
 
@@ -185,7 +182,9 @@ fn bench_merkle_depth_sweep(c: &mut Criterion) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn merkle_fixture(depth: usize) -> (
+fn merkle_fixture(
+    depth: usize,
+) -> (
     [BabyBear; DIGEST_WIDTH],
     Vec<[BabyBear; DIGEST_WIDTH]>,
     u64,
@@ -195,9 +194,7 @@ fn merkle_fixture(depth: usize) -> (
     let leaf: [BabyBear; DIGEST_WIDTH] =
         core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
     let siblings: Vec<[BabyBear; DIGEST_WIDTH]> = (0..depth)
-        .map(|level| {
-            core::array::from_fn(|i| BabyBear::from_u64((level * 100 + i + 50) as u64))
-        })
+        .map(|level| core::array::from_fn(|i| BabyBear::from_u64((level * 100 + i + 50) as u64)))
         .collect();
     (leaf, siblings, 42, depth, 7)
 }

@@ -39,9 +39,9 @@ extern crate alloc;
 
 use p3_uni_stark::{prove, verify};
 
-use crate::air::preimage::PreimageAir;
 use crate::air::merkle::MerkleInclusionAir;
-use crate::air::{FieldElement, DIGEST_WIDTH, WIDTH};
+use crate::air::preimage::PreimageAir;
+use crate::air::{DIGEST_WIDTH, FieldElement, WIDTH};
 use crate::backend::{HidingBackend, HidingConfig, StandardBackend, StandardConfig};
 
 // ---------------------------------------------------------------------------
@@ -156,7 +156,9 @@ impl PreimageProof {
     /// The value is computed on every call (no caching).
     pub fn proof_size_bytes(&self) -> usize {
         match &self.inner {
-            PreimageProofInner::Standard(p) => postcard::to_allocvec(p).map(|v| v.len()).unwrap_or(0),
+            PreimageProofInner::Standard(p) => {
+                postcard::to_allocvec(p).map(|v| v.len()).unwrap_or(0)
+            }
             PreimageProofInner::Hiding(p) => postcard::to_allocvec(p).map(|v| v.len()).unwrap_or(0),
         }
     }
@@ -164,10 +166,7 @@ impl PreimageProof {
 
 /// Prove knowledge of `preimage` such that `Poseidon2(preimage) = hash_output`,
 /// without revealing the preimage. Uses the non-hiding backend.
-pub fn prove_preimage_standard(
-    preimage: [FieldElement; WIDTH],
-    params_seed: u64,
-) -> PreimageProof {
+pub fn prove_preimage_standard(preimage: [FieldElement; WIDTH], params_seed: u64) -> PreimageProof {
     let air = PreimageAir::new(params_seed);
     let config = StandardBackend::config();
     let witness = air.generate_witness(preimage, 1);
@@ -186,10 +185,7 @@ pub fn prove_preimage_standard(
 /// Prove knowledge of `preimage` such that `Poseidon2(preimage) = hash_output`,
 /// without revealing the preimage. Uses the hiding (ZK) backend with
 /// CSPRNG-blinded commitments.
-pub fn prove_preimage_hiding(
-    preimage: [FieldElement; WIDTH],
-    params_seed: u64,
-) -> PreimageProof {
+pub fn prove_preimage_hiding(preimage: [FieldElement; WIDTH], params_seed: u64) -> PreimageProof {
     let air = PreimageAir::new(params_seed);
     let config = HidingBackend::config();
     let witness = air.generate_witness(preimage, 2);
@@ -413,8 +409,7 @@ mod tests {
             PreimageProofInner::Hiding(p) => postcard::to_allocvec(p).unwrap(),
             _ => unreachable!(),
         };
-        let deserialized: p3_uni_stark::Proof<HidingConfig> =
-            postcard::from_bytes(&bytes).unwrap();
+        let deserialized: p3_uni_stark::Proof<HidingConfig> = postcard::from_bytes(&bytes).unwrap();
         let air = PreimageAir::new(42);
         let config = HidingBackend::verifier_config();
         verify(&config, &air, &deserialized, &proof.meta.public_values)
@@ -430,8 +425,7 @@ mod tests {
         };
         let mid = bytes.len() / 2;
         bytes[mid] ^= 0xff;
-        let result: Result<p3_uni_stark::Proof<StandardConfig>, _> =
-            postcard::from_bytes(&bytes);
+        let result: Result<p3_uni_stark::Proof<StandardConfig>, _> = postcard::from_bytes(&bytes);
         if let Ok(tampered) = result {
             let air = PreimageAir::new(42);
             let config = StandardBackend::config();
@@ -515,8 +509,7 @@ mod tests {
             MerkleProofInner::Hiding(p) => postcard::to_allocvec(p).unwrap(),
             _ => unreachable!(),
         };
-        let deserialized: p3_uni_stark::Proof<HidingConfig> =
-            postcard::from_bytes(&bytes).unwrap();
+        let deserialized: p3_uni_stark::Proof<HidingConfig> = postcard::from_bytes(&bytes).unwrap();
         let air = MerkleInclusionAir::new(depth, seed);
         let config = HidingBackend::verifier_config();
         verify(&config, &air, &deserialized, &proof.meta.public_values)
@@ -541,7 +534,10 @@ mod tests {
         let proof_b = p3_uni_stark::prove(&config_b, &air, w_b.trace, &w_b.public_values);
         let bytes_b = postcard::to_allocvec(&proof_b).unwrap();
 
-        assert_eq!(bytes_a, bytes_b, "same seed should produce identical proof bytes");
+        assert_eq!(
+            bytes_a, bytes_b,
+            "same seed should produce identical proof bytes"
+        );
     }
 
     #[test]
@@ -560,21 +556,26 @@ mod tests {
         let proof_b = p3_uni_stark::prove(&config_b, &air, w_b.trace, &w_b.public_values);
         let bytes_b = postcard::to_allocvec(&proof_b).unwrap();
 
-        assert_ne!(bytes_a, bytes_b, "OS-seeded configs should produce different proof bytes");
+        assert_ne!(
+            bytes_a, bytes_b,
+            "OS-seeded configs should produce different proof bytes"
+        );
     }
 
     // -- Test helpers ----------------------------------------------------
 
-    fn merkle_fixture(depth: usize) -> (
+    fn merkle_fixture(
+        depth: usize,
+    ) -> (
         [FieldElement; DIGEST_WIDTH],
         Vec<[FieldElement; DIGEST_WIDTH]>,
         u64,
         usize,
         u64,
     ) {
+        use crate::air::Poseidon2Params;
         use crate::air::poseidon2_compress;
         use p3_baby_bear::GenericPoseidon2LinearLayersBabyBear;
-        use crate::air::Poseidon2Params;
         use rand::SeedableRng;
         use rand::rngs::SmallRng;
 

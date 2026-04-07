@@ -3,8 +3,8 @@ use std::time::Instant;
 use p3_baby_bear::BabyBear;
 use p3_field::PrimeCharacteristicRing;
 use p3_zk_proofs::{
-    prove_merkle_inclusion_standard, prove_merkle_inclusion_hiding,
-    verify_merkle_inclusion, DIGEST_WIDTH,
+    DIGEST_WIDTH, prove_merkle_inclusion_hiding, prove_merkle_inclusion_standard,
+    verify_merkle_inclusion,
 };
 
 fn main() {
@@ -16,9 +16,7 @@ fn main() {
         core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64));
 
     let siblings: Vec<[BabyBear; DIGEST_WIDTH]> = (0..depth)
-        .map(|level| {
-            core::array::from_fn(|i| BabyBear::from_u64((level * 100 + i + 50) as u64))
-        })
+        .map(|level| core::array::from_fn(|i| BabyBear::from_u64((level * 100 + i + 50) as u64)))
         .collect();
 
     println!("=== Merkle Inclusion ZK Proof ===\n");

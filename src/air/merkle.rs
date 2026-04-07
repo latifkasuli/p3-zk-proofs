@@ -15,9 +15,8 @@ use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 
 use super::{
-    FieldElement, Poseidon2Params, constrain_poseidon2,
-    poseidon2_compress,
-    WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS, DIGEST_WIDTH,
+    DIGEST_WIDTH, FieldElement, HALF_FULL_ROUNDS, PARTIAL_ROUNDS, Poseidon2Params, SBOX_DEGREE,
+    SBOX_REGISTERS, WIDTH, constrain_poseidon2, poseidon2_compress,
 };
 
 const P2_NUM_COLS: usize =
@@ -93,9 +92,7 @@ impl MerkleInclusionAir {
             }
             level_inputs.push(state);
 
-            current_hash = poseidon2_compress::<
-                FieldElement, GenericPoseidon2LinearLayersBabyBear,
-            >(
+            current_hash = poseidon2_compress::<FieldElement, GenericPoseidon2LinearLayersBabyBear>(
                 &array::from_fn(|i| state[i]),
                 &array::from_fn(|i| state[i + DIGEST_WIDTH]),
                 &self.params,
@@ -116,13 +113,20 @@ impl MerkleInclusionAir {
             let level_trace = generate_trace_rows::<
                 FieldElement,
                 GenericPoseidon2LinearLayersBabyBear,
-                WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
-            >(vec![level_inputs[level]], &self.params.to_round_constants(), 0);
+                WIDTH,
+                SBOX_DEGREE,
+                SBOX_REGISTERS,
+                HALF_FULL_ROUNDS,
+                PARTIAL_ROUNDS,
+            >(
+                vec![level_inputs[level]],
+                &self.params.to_round_constants(),
+                0,
+            );
 
             // Copy the single row of the level trace into row 0
             let src = level_trace.values.as_slice();
-            trace_vals[offset..offset + P2_NUM_COLS]
-                .copy_from_slice(&src[..P2_NUM_COLS]);
+            trace_vals[offset..offset + P2_NUM_COLS].copy_from_slice(&src[..P2_NUM_COLS]);
 
             let bit_offset = self.depth * P2_NUM_COLS + level;
             trace_vals[bit_offset] = path_bits[level];
@@ -136,15 +140,19 @@ impl MerkleInclusionAir {
                 let offset = row_start + level * P2_NUM_COLS;
                 let dummy_input: [FieldElement; WIDTH] = pad_rng.random();
 
-                let dummy_trace = generate_trace_rows::<
-                    FieldElement,
-                    GenericPoseidon2LinearLayersBabyBear,
-                    WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
-                >(vec![dummy_input], &self.params.to_round_constants(), 0);
+                let dummy_trace =
+                    generate_trace_rows::<
+                        FieldElement,
+                        GenericPoseidon2LinearLayersBabyBear,
+                        WIDTH,
+                        SBOX_DEGREE,
+                        SBOX_REGISTERS,
+                        HALF_FULL_ROUNDS,
+                        PARTIAL_ROUNDS,
+                    >(vec![dummy_input], &self.params.to_round_constants(), 0);
 
                 let src = dummy_trace.values.as_slice();
-                trace_vals[offset..offset + P2_NUM_COLS]
-                    .copy_from_slice(&src[..P2_NUM_COLS]);
+                trace_vals[offset..offset + P2_NUM_COLS].copy_from_slice(&src[..P2_NUM_COLS]);
             }
         }
 
@@ -198,8 +206,12 @@ where
         for level in 0..self.depth {
             let offset = level * P2_NUM_COLS;
             let p2: &Poseidon2Cols<
-                AB::Var, WIDTH, SBOX_DEGREE, SBOX_REGISTERS,
-                HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
+                AB::Var,
+                WIDTH,
+                SBOX_DEGREE,
+                SBOX_REGISTERS,
+                HALF_FULL_ROUNDS,
+                PARTIAL_ROUNDS,
             > = local[offset..offset + P2_NUM_COLS].borrow();
 
             level_p2_inputs.push(p2.inputs);
@@ -219,12 +231,18 @@ where
             let main = builder.main();
             let local_slice = main.current_slice();
             let p2: &Poseidon2Cols<
-                AB::Var, WIDTH, SBOX_DEGREE, SBOX_REGISTERS,
-                HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
+                AB::Var,
+                WIDTH,
+                SBOX_DEGREE,
+                SBOX_REGISTERS,
+                HALF_FULL_ROUNDS,
+                PARTIAL_ROUNDS,
             > = local_slice[offset..offset + P2_NUM_COLS].borrow();
 
             constrain_poseidon2::<AB, GenericPoseidon2LinearLayersBabyBear>(
-                builder, p2, &self.params,
+                builder,
+                p2,
+                &self.params,
             );
 
             let bit: AB::Expr = level_bits[level].into();
@@ -245,10 +263,9 @@ where
 
             if level == self.depth - 1 {
                 for j in 0..DIGEST_WIDTH {
-                    builder.when_first_row().assert_eq(
-                        level_p2_outputs[level][j],
-                        pis[j].into(),
-                    );
+                    builder
+                        .when_first_row()
+                        .assert_eq(level_p2_outputs[level][j], pis[j].into());
                 }
             }
         }
@@ -258,11 +275,11 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::air::poseidon2_compress;
+    use crate::backend::{HidingBackend, StandardBackend};
     use p3_baby_bear::BabyBear;
     use p3_field::PrimeCharacteristicRing;
     use p3_uni_stark::{prove, verify};
-    use crate::backend::{StandardBackend, HidingBackend};
-    use crate::air::poseidon2_compress;
 
     type MerkleFixture = (
         [BabyBear; DIGEST_WIDTH],
@@ -276,8 +293,7 @@ mod tests {
         let mut rng = SmallRng::seed_from_u64(seed);
         let params = Poseidon2Params::from_rng(&mut rng);
 
-        let leaf: [BabyBear; DIGEST_WIDTH] =
-            array::from_fn(|i| BabyBear::from_u64(i as u64 + 1));
+        let leaf: [BabyBear; DIGEST_WIDTH] = array::from_fn(|i| BabyBear::from_u64(i as u64 + 1));
         let leaf_index: u64 = 3;
 
         let mut siblings = Vec::with_capacity(depth);

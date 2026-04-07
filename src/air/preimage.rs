@@ -12,14 +12,18 @@ use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 
 use super::{
-    FieldElement, Poseidon2Params, poseidon2_permute,
-    WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
+    FieldElement, HALF_FULL_ROUNDS, PARTIAL_ROUNDS, Poseidon2Params, SBOX_DEGREE, SBOX_REGISTERS,
+    WIDTH, poseidon2_permute,
 };
 
 type InnerAir = Poseidon2Air<
     FieldElement,
     GenericPoseidon2LinearLayersBabyBear,
-    WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
+    WIDTH,
+    SBOX_DEGREE,
+    SBOX_REGISTERS,
+    HALF_FULL_ROUNDS,
+    PARTIAL_ROUNDS,
 >;
 
 /// Proves knowledge of a Poseidon2 preimage without revealing it.
@@ -60,10 +64,10 @@ impl PreimageAir {
         preimage: [FieldElement; WIDTH],
         log_blowup: usize,
     ) -> PreimageWitness {
-        let hash_output =
-            poseidon2_permute::<FieldElement, GenericPoseidon2LinearLayersBabyBear>(
-                preimage, &self.params,
-            );
+        let hash_output = poseidon2_permute::<FieldElement, GenericPoseidon2LinearLayersBabyBear>(
+            preimage,
+            &self.params,
+        );
 
         let min_rows = 2usize;
         let mut inputs = Vec::with_capacity(min_rows);
@@ -77,7 +81,11 @@ impl PreimageAir {
         let trace = generate_trace_rows::<
             FieldElement,
             GenericPoseidon2LinearLayersBabyBear,
-            WIDTH, SBOX_DEGREE, SBOX_REGISTERS, HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
+            WIDTH,
+            SBOX_DEGREE,
+            SBOX_REGISTERS,
+            HALF_FULL_ROUNDS,
+            PARTIAL_ROUNDS,
         >(inputs, &self.params.to_round_constants(), log_blowup);
 
         PreimageWitness {
@@ -117,8 +125,12 @@ where
 
         let main = builder.main();
         let local: &Poseidon2Cols<
-            AB::Var, WIDTH, SBOX_DEGREE, SBOX_REGISTERS,
-            HALF_FULL_ROUNDS, PARTIAL_ROUNDS,
+            AB::Var,
+            WIDTH,
+            SBOX_DEGREE,
+            SBOX_REGISTERS,
+            HALF_FULL_ROUNDS,
+            PARTIAL_ROUNDS,
         > = main.current_slice().borrow();
 
         let output: [AB::Var; WIDTH] = local.ending_full_rounds[HALF_FULL_ROUNDS - 1].post;
@@ -134,10 +146,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::backend::{HidingBackend, StandardBackend};
     use p3_baby_bear::BabyBear;
     use p3_field::PrimeCharacteristicRing;
     use p3_uni_stark::{prove, verify};
-    use crate::backend::{StandardBackend, HidingBackend};
 
     fn test_preimage() -> [BabyBear; WIDTH] {
         core::array::from_fn(|i| BabyBear::from_u64((i + 1) as u64))

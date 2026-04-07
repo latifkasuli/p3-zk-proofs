@@ -141,7 +141,8 @@ type StdValMmcs = MerkleTreeMmcs<
     [u64; p3_keccak::VECTOR_LEN],
     FieldHash,
     Compress,
-    2, 4,
+    2,
+    4,
 >;
 type StdChallengeMmcs = ExtensionMmcs<Val, Challenge, StdValMmcs>;
 type StdPcs = TwoAdicFriPcs<Val, Dft, StdValMmcs, StdChallengeMmcs>;
@@ -188,7 +189,9 @@ type ZkValMmcs = MerkleTreeHidingMmcs<
     FieldHash,
     Compress,
     HidingRng,
-    2, 4, 4,
+    2,
+    4,
+    4,
 >;
 type ZkChallengeMmcs = ExtensionMmcs<Val, Challenge, ZkValMmcs>;
 type ZkPcs = HidingFriPcs<Val, Dft, ZkValMmcs, ZkChallengeMmcs, HidingRng>;
@@ -220,7 +223,10 @@ impl HidingBackend {
     /// Proofs produced with this config are linkable and predictable.
     /// **Not suitable for production use.**
     pub fn deterministic_config(seed: u64) -> HidingConfig {
-        Self::build(HidingRng::from_test_seed(seed), HidingRng::from_test_seed(seed + 1))
+        Self::build(
+            HidingRng::from_test_seed(seed),
+            HidingRng::from_test_seed(seed + 1),
+        )
     }
 
     fn build(mmcs_rng: HidingRng, pcs_rng: HidingRng) -> HidingConfig {

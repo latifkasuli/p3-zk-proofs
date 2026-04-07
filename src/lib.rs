@@ -24,14 +24,13 @@
 //! - Formal security analysis -- the hiding properties inherit from Plonky3's
 //!   `HidingFriPcs` and are only as strong as that implementation.
 
-pub mod api;
 pub mod air;
+pub mod api;
 pub mod backend;
 
+pub use air::{DIGEST_WIDTH, FieldElement, WIDTH};
 pub use api::{
-    BackendKind, ProofMetadata, VerifyError, FORMAT_VERSION,
-    PreimageProof, MerkleInclusionProof,
-    prove_preimage_standard, prove_preimage_hiding, verify_preimage,
-    prove_merkle_inclusion_standard, prove_merkle_inclusion_hiding, verify_merkle_inclusion,
+    BackendKind, FORMAT_VERSION, MerkleInclusionProof, PreimageProof, ProofMetadata, VerifyError,
+    prove_merkle_inclusion_hiding, prove_merkle_inclusion_standard, prove_preimage_hiding,
+    prove_preimage_standard, verify_merkle_inclusion, verify_preimage,
 };
-pub use air::{FieldElement, WIDTH, DIGEST_WIDTH};
