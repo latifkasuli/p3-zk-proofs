@@ -1,0 +1,57 @@
+[package]
+name = "p3-zk-proofs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+description = "Reference ZK applications on Plonky3's HidingFriPcs"
+repository = "https://github.com/latifkasuli/p3-zk-proofs"
+keywords = ["zero-knowledge", "plonky3", "STARK", "privacy", "FRI"]
+categories = ["cryptography"]
+
+[dependencies]
+p3-air = "0.5"
+p3-baby-bear = "0.5"
+p3-challenger = "0.5"
+p3-commit = { version = "0.5", features = ["test-utils"] }
+p3-dft = "0.5"
+p3-field = "0.5"
+p3-fri = "0.5"
+p3-keccak = "0.5"
+p3-matrix = "0.5"
+p3-merkle-tree = "0.5"
+p3-poseidon2 = "0.5"
+p3-poseidon2-air = "0.5"
+p3-symmetric = "0.5"
+p3-uni-stark = "0.5"
+p3-util = "0.5"
+
+postcard = { version = "1", default-features = false, features = ["alloc"] }
+rand = { version = "0.10", default-features = false, features = ["std", "thread_rng"] }
+rand_core = { version = "0.10", default-features = false }
+serde = { version = "1", default-features = false, features = ["alloc"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[features]
+default = []
+parallel = ["p3-poseidon2-air/parallel"]
+
+[[bench]]
+name = "zk_overhead"
+harness = false
+
+[[example]]
+name = "preimage"
+
+[[example]]
+name = "merkle"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
+inherits = "release"
+debug = 1
